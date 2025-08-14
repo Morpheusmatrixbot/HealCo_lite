@@ -1,3 +1,2 @@
-run = "python3 main.py"
+run = "python main.py"
 language = "python3"
-entrypoint = "main.py"
