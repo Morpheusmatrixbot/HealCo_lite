@@ -1,0 +1,4 @@
+python-telegram-bot==21.6
+openai>=1.30.0
+python-dotenv>=1.0.1
+replit==3.3.2
