@@ -27,6 +27,14 @@ from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 
+# ========= ЛОГИ =========
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    handlers=[logging.FileHandler("bot.log", encoding="utf-8"), logging.StreamHandler()],
+)
+logger = logging.getLogger("healco-lite")
+
 # Импортируем Open Food Facts модуль
 try:
     from openfood import off_by_barcode, off_search_by_name, set_user_agent
@@ -55,14 +63,6 @@ from telegram.ext import (
     filters,
     PreCheckoutQueryHandler,
 )
-
-# ========= ЛОГИ =========
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[logging.FileHandler("bot.log", encoding="utf-8"), logging.StreamHandler()],
-)
-logger = logging.getLogger("healco-lite")
 
 LOCK_PATH = "/tmp/healco_bot.lock"
 
