@@ -1,22 +1,8 @@
-import ast
-import pathlib
-from typing import Any, Dict, Optional
-import pytest
+import sys
+from pathlib import Path
 
-# Load _extract_from_json_ld function from main.py without executing the whole module
-MAIN_PATH = pathlib.Path(__file__).resolve().parent.parent / "main.py"
-with MAIN_PATH.open("r", encoding="utf-8") as f:
-    module_ast = ast.parse(f.read(), filename="main.py")
-
-_extract_from_json_ld = None
-for node in module_ast.body:
-    if isinstance(node, ast.FunctionDef) and node.name == "_extract_from_json_ld":
-        func_module = ast.Module(body=[node], type_ignores=[])
-        code = compile(func_module, filename="main.py", mode="exec")
-        namespace = {"Dict": Dict, "Any": Any, "Optional": Optional}
-        exec(code, namespace)
-        _extract_from_json_ld = namespace["_extract_from_json_ld"]
-        break
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from utils.json_ld import _extract_from_json_ld
 
 
 def test_extract_from_json_ld_missing_nutrition_returns_none():
@@ -54,3 +40,4 @@ def test_extract_from_json_ld_nested_objects_parsed():
         "carbs_100g": 2.0,
     }
     assert _extract_from_json_ld(data) == expected
+
