@@ -6350,10 +6350,12 @@ def start_keepalive_server():
 def main():
     with single_instance_lock():
         if not BOT_TOKEN:
-            print("Ошибка: не задан TELEGRAM_BOT_TOKEN")
+            logger.error("Ошибка: не задан TELEGRAM_BOT_TOKEN")
             return
         if not TELEGRAM_PAYMENT_PROVIDER_TOKEN:
-            print("Внимание: не задан TELEGRAM_PAYMENT_PROVIDER_TOKEN. Платёжные функции будут недоступны.")
+            logger.warning(
+                "Внимание: не задан TELEGRAM_PAYMENT_PROVIDER_TOKEN. Платёжные функции будут недоступны."
+            )
 
         log_egress_ip_once()
 
@@ -6392,7 +6394,7 @@ def main():
         app.add_handler(MessageHandler(filters.TEXT | filters.PHOTO, handle_text_or_photo))
         app.add_error_handler(error_handler)
 
-        print(f"{PROJECT_NAME} запущен. {VERSION}")
+        logger.info(f"{PROJECT_NAME} запущен. {VERSION}")
         app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
