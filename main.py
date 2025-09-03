@@ -4479,8 +4479,8 @@ async def handle_text_or_photo(update: Update, context: ContextTypes.DEFAULT_TYP
                 mins = int(mins_match.group(1)) if mins_match else 45
                 hr_match = re.search(r"(\d{2,3})\s*(?:уд|чсс|пульс)", desc, re.I)
                 hrm = int(hr_match.group(1)) if hr_match else None
-            except:
-                pass
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Failed to parse workout description '{desc}': {e}")
             kcal = estimate_kcal_workout(st["profile"], desc, mins, hrm)
             t = desc.lower()
             t_type = next(
@@ -5344,7 +5344,8 @@ def _parse_av_ru_html(html: str) -> Optional[Dict[str, Any]]:
                     result = _extract_from_json_ld(data)
                     if result:
                         return result
-            except:
+            except Exception as e:
+                logger.debug(f"Failed to parse JSON-LD script: {e}")
                 continue
                 
         # 2) Пробуем window.__INITIAL_STATE__
@@ -5356,9 +5357,9 @@ def _parse_av_ru_html(html: str) -> Optional[Dict[str, Any]]:
                 result = _extract_from_state(product)
                 if result:
                     return result
-            except:
-                pass
-                
+            except Exception as e:
+                logger.debug(f"Failed to parse __INITIAL_STATE__: {e}")
+
         # 3) Парсим текст напрямую
         text = soup.get_text(" ", strip=True).lower()
         
@@ -5367,7 +5368,8 @@ def _parse_av_ru_html(html: str) -> Optional[Dict[str, Any]]:
             if match:
                 try:
                     return float(match.group(1).replace(',', '.'))
-                except:
+                except (ValueError, TypeError) as e:
+                    logger.debug(f"Failed to parse number: {e}")
                     return None
             return None
             
@@ -5417,7 +5419,8 @@ def _extract_from_json_ld(data: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             value = value.get("@value") or value.get("value")
         try:
             return float(str(value).replace(',', '.')) if value is not None else None
-        except:
+        except (ValueError, TypeError) as e:
+            logger.debug(f"Failed to parse nutrition value '{value}': {e}")
             return None
             
     kcal = get_nutrition_value("calories") or get_nutrition_value("energy") or get_nutrition_value("caloriesContent")
@@ -5448,7 +5451,8 @@ def _extract_from_state(product: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     def to_float(value):
         try:
             return float(str(value).replace(',', '.')) if value is not None else None
-        except:
+        except (ValueError, TypeError) as e:
+            logger.debug(f"Failed to convert value '{value}': {e}")
             return None
             
     return {
