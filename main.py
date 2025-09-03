@@ -22,6 +22,7 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional, Tuple
 from requests_oauthlib import OAuth1
 from bs4 import BeautifulSoup
+from aiohttp import web
 
 from pathlib import Path
 from dotenv import load_dotenv
@@ -6350,6 +6351,12 @@ def start_keepalive_server():
     except Exception as e:
         logger.warning(f"Keep‑alive server не запущен: {e}")
 
+
+def _add_healthz(app: web.Application):
+    async def ok(_):
+        return web.Response(text="ok")
+    app.router.add_get("/healthz", ok)
+
 # ========= ЗАПУСК =========
 def main():
     with single_instance_lock():
@@ -6399,7 +6406,22 @@ def main():
         app.add_error_handler(error_handler)
 
         logger.info(f"{PROJECT_NAME} запущен. {VERSION}")
-        app.run_polling(drop_pending_updates=True)
+        run_mode = os.environ.get("RUN_MODE", "webhook").lower()
+        if run_mode == "webhook":
+            port = int(os.environ.get("PORT", "8080"))
+            webhook_path = f"/webhook/{BOT_TOKEN}"
+            web_app = web.Application()
+            _add_healthz(web_app)
+            app.run_webhook(
+                listen="0.0.0.0",
+                port=port,
+                webhook_path=webhook_path,
+                web_app=web_app,
+                secret_token=os.environ.get("WEBHOOK_SECRET") or None,
+                drop_pending_updates=True,
+            )
+        else:
+            app.run_polling(drop_pending_updates=True)
 
 if __name__ == "__main__":
     main()
