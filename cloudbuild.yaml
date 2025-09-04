@@ -1,7 +1,8 @@
 substitutions:
-  _IMAGE_NAME: "healcoeu3"                 # имя образа
+  _PROJECT_ID: "your-project-id"           # Google Cloud project ID
   _REGION: "europe-west3"                  # регион AR и Cloud Run
   _REPO: "healco-lite-repo"                # репозиторий в Artifact Registry
+  _IMAGE_NAME: "healcoeu3"                 # имя образа и сервиса Cloud Run
 
 steps:
   # 1) Build
@@ -9,14 +10,14 @@ steps:
     args:
       - build
       - "-t"
-      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE_NAME}:$SHORT_SHA"
+      - "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO}/${_IMAGE_NAME}:$SHORT_SHA"
       - "."
 
   # 2) Push
   - name: "gcr.io/cloud-builders/docker"
     args:
       - push
-      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE_NAME}:$SHORT_SHA"
+      - "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO}/${_IMAGE_NAME}:$SHORT_SHA"
 
   # 3) Deploy to Cloud Run
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
@@ -24,14 +25,16 @@ steps:
     args:
       - run
       - deploy
-      - "healcoeu3"                                 # имя сервиса Cloud Run
+      - "${_IMAGE_NAME}"                               # имя сервиса Cloud Run
       - "--image"
-      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE_NAME}:$SHORT_SHA"
+      - "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO}/${_IMAGE_NAME}:$SHORT_SHA"
       - "--region"
       - "${_REGION}"
+      - "--project"
+      - "${_PROJECT_ID}"
       - "--platform"
       - "managed"
       - "--allow-unauthenticated"
 
 images:
-  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE_NAME}:$SHORT_SHA"
+  - "${_REGION}-docker.pkg.dev/${_PROJECT_ID}/${_REPO}/${_IMAGE_NAME}:$SHORT_SHA"
