@@ -204,16 +204,20 @@ class LocalDB:
     def keys(self):
         return list(self.store.keys())
 
-local_db = LocalDB(os.environ.get("HLITE_DB_PATH", "db.json"))
+local_db = None
+if not DISABLE_LOCAL_DB:
+    local_db = LocalDB(os.environ.get("HLITE_DB_PATH", "db.json"))
 
 def db_get(k, default=None):
     if HAS_REPLIT:
         try:
             return replit_db.get(k, default)
         except Exception:
-            # Если Replit DB недоступна, используем локальную
+            if DISABLE_LOCAL_DB or local_db is None:
+                raise RuntimeError("Local DB is disabled")
             return local_db.store.get(k, default)
-    # Если Replit недоступен, используем локальную
+    if DISABLE_LOCAL_DB or local_db is None:
+        raise RuntimeError("Local DB is disabled")
     return local_db.store.get(k, default)
 
 def db_set(k, v):
@@ -222,19 +226,25 @@ def db_set(k, v):
             replit_db[k] = v
             return
         except Exception:
-            # Если Replit DB недоступна, записываем в локальную
-            pass
-    # Записываем в локальную БД
+            if DISABLE_LOCAL_DB or local_db is None:
+                raise RuntimeError("Local DB is disabled")
+    if DISABLE_LOCAL_DB or local_db is None:
+        raise RuntimeError("Local DB is disabled")
     local_db[k] = v
 
 def db_keys_prefix(prefix: str) -> List[str]:
-    try:
-        # Пытаемся получить ключи из Replit DB, если доступно
-        src = replit_db.keys() if HAS_REPLIT else local_db.keys()
-        return [k for k in src if str(k).startswith(prefix)]
-    except Exception:
-        # Если Replit DB недоступна, возвращаем ключи из локальной БД
-        return [k for k in local_db.keys() if str(k).startswith(prefix)]
+    if HAS_REPLIT:
+        try:
+            src = replit_db.keys()
+        except Exception:
+            if DISABLE_LOCAL_DB or local_db is None:
+                raise RuntimeError("Local DB is disabled")
+            src = local_db.keys()
+    else:
+        if DISABLE_LOCAL_DB or local_db is None:
+            raise RuntimeError("Local DB is disabled")
+        src = local_db.keys()
+    return [k for k in src if str(k).startswith(prefix)]
 
 # ========= КНОПКИ =========
 MAIN_MENU = [
