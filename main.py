@@ -170,7 +170,7 @@ DISABLE_LOCAL_DB = True  # ← принудительно выключаем л�
 GOOGLE_CSE_KEY = get_secret("GOOGLE_CSE_KEY", "")
 GOOGLE_CSE_CX  = get_secret("GOOGLE_CSE_CX", "")
 VISION_KEY     = get_secret("VISION_KEY", "")        # опционально
-USDA_API_KEY   = get_secret("USDA_FDC_API_KEY", "cOQTpuHzZ2aOOpixNXoi8f5n94nEu5RvRoGf3o88")
+USDA_API_KEY   = get_secret("USDA_FDC_API_KEY", "")  # USDA FoodData Central API key
 
 class LocalDB:
     def __init__(self, path="db.json"):
