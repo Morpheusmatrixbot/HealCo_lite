@@ -49,15 +49,15 @@ try:
         loop = asyncio.get_event_loop()
         return await loop.run_in_executor(None, off_search.search, name)
 
-    def set_user_agent(app_name: str, email: str) -> None:
-        off_utils.user_agent = f"{app_name} ({email})"
+    def set_user_agent(user_agent: str) -> None:
+        off_utils.user_agent = user_agent
 
-    set_user_agent("HealCoLite/1.2", "rafael.sayadi@gmail.com")
+    set_user_agent(OPENFOOD_USER_AGENT)
     HAS_OPENFOOD = True
 except ImportError:
     try:
         from openfood import off_by_barcode, off_search_by_name, set_user_agent
-        set_user_agent("HealCoLite/1.2", "rafael.sayadi@gmail.com")
+        set_user_agent(OPENFOOD_USER_AGENT)
         HAS_OPENFOOD = True
     except ImportError as e:
         logger.warning(f"Open Food Facts module not available: {e}")
@@ -108,6 +108,7 @@ def log_egress_ip_once():
 VERSION = "healco lite v1.2"
 PROJECT_NAME = "Healco Lite v1.2"
 MODEL_NAME = "gpt-4o-mini"
+OPENFOOD_USER_AGENT = "HealCoLite/1.0 (rafael.sayadi@gmail.com)"
 
 # ========= ENV =========
 load_dotenv()
@@ -2780,7 +2781,7 @@ async def search_openfoodfacts_product(query: str) -> Optional[Dict[str, Any]]:
             return None
 
         headers = {
-            'User-Agent': 'Healco-Bot/1.0 (https://replit.com)',
+            'User-Agent': OPENFOOD_USER_AGENT,
             'Accept': 'application/json'
         }
 
