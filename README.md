@@ -56,3 +56,6 @@ gcloud run services update healco-lite \
   --health-check-initial-delay 180 \
   --health-check-timeout 60
 ```
+
+## Лицензия
+Проект распространяется по лицензии MIT. См. файл [LICENSE](LICENSE) для подробностей.
