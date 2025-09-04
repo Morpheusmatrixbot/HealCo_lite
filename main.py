@@ -6427,13 +6427,10 @@ def main():
         if run_mode == "webhook":
             port = int(os.environ.get("PORT", "8080"))
             webhook_path = f"/webhook/{BOT_TOKEN}"
-            web_app = web.Application()
-            _add_healthz(web_app)
             app.run_webhook(
                 listen="0.0.0.0",
                 port=port,
-                webhook_path=webhook_path,
-                web_app=web_app,
+                url_path=webhook_path,
                 secret_token=os.environ.get("WEBHOOK_SECRET") or None,
                 drop_pending_updates=True,
             )
