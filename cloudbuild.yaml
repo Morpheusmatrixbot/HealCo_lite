@@ -1,5 +1,6 @@
 substitutions:
   _IMAGE_NAME: "healcoeu3"                 # имя образа
+  _SERVICE_NAME: "healcoeu3"               # имя сервиса Cloud Run
   _REGION: "europe-west3"                  # регион AR и Cloud Run
   _REPO: "healco-lite-repo"                # репозиторий в Artifact Registry
 
@@ -24,7 +25,7 @@ steps:
     args:
       - run
       - deploy
-      - "healcoeu3"                                 # имя сервиса Cloud Run
+      - "${_SERVICE_NAME}"                               # имя сервиса Cloud Run
       - "--image"
       - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE_NAME}:$SHORT_SHA"
       - "--region"
