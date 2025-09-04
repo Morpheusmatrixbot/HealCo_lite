@@ -11,7 +11,6 @@ import os
 import re
 import json
 import asyncio
-import logging
 import random
 import requests
 import httpx
@@ -28,13 +27,12 @@ from pathlib import Path
 from dotenv import load_dotenv
 from openai import OpenAI
 
-# ========= ЛОГИ =========
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-    handlers=[logging.FileHandler("bot.log", encoding="utf-8"), logging.StreamHandler()],
-)
-logger = logging.getLogger("healco-lite")
+from utils.config import get_secret
+from utils.logging import logger
+from utils.db import db_get, db_set, db_keys_prefix
+from utils.cache import _cache_get, _cache_put, CACHE_SCHEMA
+
+OPENFOOD_USER_AGENT = "HealCoLite/1.0 (rafael.sayadi@gmail.com)"
 
 # Импортируем Open Food Facts модуль
 try:
@@ -108,16 +106,9 @@ def log_egress_ip_once():
 VERSION = "healco lite v1.2"
 PROJECT_NAME = "Healco Lite v1.2"
 MODEL_NAME = "gpt-4o-mini"
-OPENFOOD_USER_AGENT = "HealCoLite/1.0 (rafael.sayadi@gmail.com)"
 
 # ========= ENV =========
 load_dotenv()
-
-# Функция для безопасного получения секретов из Replit Secrets
-def get_secret(key: str, default: str = "") -> str:
-    """Получает секрет из Replit Secrets с fallback на переменные окружения"""
-    # Прямой fallback на переменные окружения
-    return os.getenv(key, default)
 
 OPENAI_API_KEY = get_secret("OPENAI_API_KEY", "")
 BOT_TOKEN = get_secret("TELEGRAM_BOT_TOKEN", "")
@@ -157,13 +148,6 @@ PRICE_MAXIMUM = 500     # Stars
 PRICE_MOTIVATION = 1    # Stars
 FREE_DIARY_LIMIT = 2    # Лимит записей в free
 
-# ========= DB =========
-try:
-    from replit import db as replit_db
-    HAS_REPLIT = True
-except Exception:
-    HAS_REPLIT = False
-
 # === НАСТРОЙКИ/КЛЮЧИ ===
 USE_JSONL = os.getenv("USE_JSONL","0") == "1"   # по умолчанию НЕ грузим дампы
 DISABLE_LOCAL_DB = True  # ← принудительно выключаем любые локальные БД
@@ -171,70 +155,6 @@ GOOGLE_CSE_KEY = get_secret("GOOGLE_CSE_KEY", "")
 GOOGLE_CSE_CX  = get_secret("GOOGLE_CSE_CX", "")
 VISION_KEY     = get_secret("VISION_KEY", "")        # опционально
 USDA_API_KEY   = get_secret("USDA_FDC_API_KEY", "cOQTpuHzZ2aOOpixNXoi8f5n94nEu5RvRoGf3o88")
-
-class LocalDB:
-    def __init__(self, path="db.json"):
-        self.path = path
-        if not os.path.exists(self.path):
-            with open(self.path, "w", encoding="utf-8") as f:
-                json.dump({}, f, ensure_ascii=False, indent=2)
-        self._load()
-
-    def _load(self):
-        try:
-            with open(self.path, "r", encoding="utf-8") as f:
-                self.store = json.load(f)
-        except Exception:
-            self.store = {}
-
-    def _save(self):
-        with open(self.path, "w", encoding="utf-8") as f:
-            json.dump(self.store, f, ensure_ascii=False, indent=2)
-
-    def __getitem__(self, k):
-        return self.store.get(k)
-
-    def __setitem__(self, k, v):
-        self.store[k] = v
-        self._save()
-
-    def __contains__(self, k):
-        return k in self.store
-
-    def keys(self):
-        return list(self.store.keys())
-
-local_db = LocalDB(os.environ.get("HLITE_DB_PATH", "db.json"))
-
-def db_get(k, default=None):
-    if HAS_REPLIT:
-        try:
-            return replit_db.get(k, default)
-        except Exception:
-            # Если Replit DB недоступна, используем локальную
-            return local_db.store.get(k, default)
-    # Если Replit недоступен, используем локальную
-    return local_db.store.get(k, default)
-
-def db_set(k, v):
-    if HAS_REPLIT:
-        try:
-            replit_db[k] = v
-            return
-        except Exception:
-            # Если Replit DB недоступна, записываем в локальную
-            pass
-    # Записываем в локальную БД
-    local_db[k] = v
-
-def db_keys_prefix(prefix: str) -> List[str]:
-    try:
-        # Пытаемся получить ключи из Replit DB, если доступно
-        src = replit_db.keys() if HAS_REPLIT else local_db.keys()
-        return [k for k in src if str(k).startswith(prefix)]
-    except Exception:
-        # Если Replit DB недоступна, возвращаем ключи из локальной БД
-        return [k for k in local_db.keys() if str(k).startswith(prefix)]
 
 # ========= КНОПКИ =========
 MAIN_MENU = [
@@ -885,41 +805,6 @@ def route_query_with_ai(info: dict, original_text: str) -> dict:
 # GOOGLE_CSE_CX = get_secret("GOOGLE_CSE_CX", "")   # Перенесено выше
 # VISION_KEY = get_secret("VISION_KEY", "")         # Перенесено выше
 
-# === Лёгкий кэш (SQLite) для оптимизации поиска ===
-import sqlite3
-import base64
-import time
-
-CACHE_SCHEMA = "r4"  # ↑ поменяешь — старый кэш будет игнориться
-
-os.makedirs("./data", exist_ok=True)
-_con = sqlite3.connect("./data/cache.db")
-_con.execute("""CREATE TABLE IF NOT EXISTS nutri_cache(
-  key TEXT PRIMARY KEY,
-  payload TEXT NOT NULL,
-  last_used INTEGER NOT NULL,
-  size_bytes INTEGER NOT NULL
-)""")
-_con.commit()
-
-def _cache_get(k: str):
-    r = _con.execute("SELECT payload FROM nutri_cache WHERE key=?", (k,)).fetchone()
-    if not r:
-        return None
-    _con.execute("UPDATE nutri_cache SET last_used=? WHERE key=?", (int(time.time()), k))
-    _con.commit()
-    return json.loads(r[0])
-
-def _cache_put(k: str, obj: dict, limit_mb: int = 50):
-    data = json.dumps(obj, ensure_ascii=False)
-    _con.execute("INSERT OR REPLACE INTO nutri_cache(key,payload,last_used,size_bytes) VALUES (?,?,?,?)",
-                 (k, data, int(time.time()), len(data)))
-    _con.commit()
-    total = _con.execute("SELECT COALESCE(SUM(size_bytes),0) FROM nutri_cache").fetchone()[0] or 0
-    while total > limit_mb*1024*1024:
-        _con.execute("DELETE FROM nutri_cache WHERE key IN (SELECT key FROM nutri_cache ORDER BY last_used ASC LIMIT 50)")
-        _con.commit()
-        total = _con.execute("SELECT COALESCE(SUM(size_bytes),0) FROM nutri_cache").fetchone()[0] or 0
 
 # ========================= УЛУЧШЕННЫЙ GOOGLE CSE ПОИСК =========================
 def _extract_portions(text: str) -> Tuple[str, Optional[float], Optional[float]]:
