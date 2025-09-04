@@ -36,6 +36,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger("healco-lite")
 
+OPENFOOD_USER_AGENT = "HealCoLite/1.0 (rafael.sayadi@gmail.com)"
+
 # Импортируем Open Food Facts модуль
 try:
     import openfoodfacts
@@ -108,7 +110,6 @@ def log_egress_ip_once():
 VERSION = "healco lite v1.2"
 PROJECT_NAME = "Healco Lite v1.2"
 MODEL_NAME = "gpt-4o-mini"
-OPENFOOD_USER_AGENT = "HealCoLite/1.0 (rafael.sayadi@gmail.com)"
 
 # ========= ENV =========
 load_dotenv()
