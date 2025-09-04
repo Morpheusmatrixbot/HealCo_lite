@@ -20,7 +20,7 @@ pip install .
 - `GOOGLE_CSE_KEY` — API‑ключ Google Custom Search.
 - `GOOGLE_CSE_CX` — идентификатор поисковой системы Google CSE.
 - `VISION_KEY` — ключ API для распознавания изображений (опционально).
-- `USDA_FDC_API_KEY` — ключ USDA FoodData Central.
+- `USDA_FDC_API_KEY` — ключ USDA FoodData Central. Его необходимо указать через одноимённую переменную окружения; в коде он не хранится.
 - `EXTERNAL_JSONL_URL` — URL внешнего JSONL файла с данными (опционально).
 - `GDRIVE_ID` — идентификатор файла в Google Drive (опционально).
 - `FATSECRET_KEY` — ключ API FatSecret.
