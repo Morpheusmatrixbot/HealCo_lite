@@ -1,0 +1,37 @@
+substitutions:
+  _IMAGE_NAME: "healcoeu3"                 # имя образа
+  _REGION: "europe-west3"                  # регион AR и Cloud Run
+  _REPO: "healco-lite-repo"                # репозиторий в Artifact Registry
+
+steps:
+  # 1) Build
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - build
+      - "-t"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE_NAME}:$SHORT_SHA"
+      - "."
+
+  # 2) Push
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - push
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE_NAME}:$SHORT_SHA"
+
+  # 3) Deploy to Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - "healcoeu3"                                 # имя сервиса Cloud Run
+      - "--image"
+      - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE_NAME}:$SHORT_SHA"
+      - "--region"
+      - "${_REGION}"
+      - "--platform"
+      - "managed"
+      - "--allow-unauthenticated"
+
+images:
+  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE_NAME}:$SHORT_SHA"
