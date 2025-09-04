@@ -38,13 +38,30 @@ logger = logging.getLogger("healco-lite")
 
 # Импортируем Open Food Facts модуль
 try:
-    from openfood import off_by_barcode, off_search_by_name, set_user_agent
-    # Настраиваем User-Agent для Open Food Facts
+    import openfoodfacts
+    from openfoodfacts import products as off_products, search as off_search, utils as off_utils
+
+    async def off_by_barcode(barcode: str, **kwargs):
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, off_products.get_product, barcode)
+
+    async def off_search_by_name(name: str, **kwargs):
+        loop = asyncio.get_event_loop()
+        return await loop.run_in_executor(None, off_search.search, name)
+
+    def set_user_agent(app_name: str, email: str) -> None:
+        off_utils.user_agent = f"{app_name} ({email})"
+
     set_user_agent("HealCoLite/1.2", "rafael.sayadi@gmail.com")
     HAS_OPENFOOD = True
-except ImportError as e:
-    logger.warning(f"Open Food Facts module not available: {e}")
-    HAS_OPENFOOD = False
+except ImportError:
+    try:
+        from openfood import off_by_barcode, off_search_by_name, set_user_agent
+        set_user_agent("HealCoLite/1.2", "rafael.sayadi@gmail.com")
+        HAS_OPENFOOD = True
+    except ImportError as e:
+        logger.warning(f"Open Food Facts module not available: {e}")
+        HAS_OPENFOOD = False
 
 from telegram import (
     Update,
