@@ -43,6 +43,16 @@ gcloud builds submit --tag gcr.io/<PROJECT_ID>/healco-lite
 gcloud run deploy healco-lite \
   --image gcr.io/<PROJECT_ID>/healco-lite \
   --region <REGION> \
-  --set-env-vars OPENAI_API_KEY=...,TELEGRAM_BOT_TOKEN=...,TELEGRAM_PAYMENT_PROVIDER_TOKEN=... \
+  --port 8080 \
+  --set-env-vars PORT=8080,OPENAI_API_KEY=...,TELEGRAM_BOT_TOKEN=...,TELEGRAM_PAYMENT_PROVIDER_TOKEN=... \
+  --health-check-http-path /healthz \
   --allow-unauthenticated
+```
+
+При долгой инициализации можно увеличить таймауты проверок здоровья, например:
+
+```bash
+gcloud run services update healco-lite \
+  --health-check-initial-delay 180 \
+  --health-check-timeout 60
 ```
