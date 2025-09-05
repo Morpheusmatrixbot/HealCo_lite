@@ -9,3 +9,4 @@ beautifulsoup4>=4.12.2
 pydantic==2.7.4
 pydantic-core==2.18.4
 openfoodfacts==2.9.0
+google-cloud-secret-manager>=2.0.0
