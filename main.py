@@ -6284,6 +6284,8 @@ def main():
 
         app = Application.builder().token(BOT_TOKEN).concurrent_updates(True).build()
 
+        _add_healthz(app.web_app)
+
         app.add_handler(CommandHandler("start", start))
         app.add_handler(CommandHandler("help", help_cmd))
         app.add_handler(CommandHandler("whoami", whoami_cmd))
