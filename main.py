@@ -6248,6 +6248,16 @@ async def handle_onboarding(update: Update, context: ContextTypes.DEFAULT_TYPE, 
 
 # ========= KEEP‑ALIVE HTTP СЕРВЕР =========
 def start_keepalive_server():
+    """Запускает keep‑alive сервер, если он необходим.
+
+    На Cloud Run (где переменная окружения ``CLOUD_RUN=true``)
+    отдельный keep‑alive не требуется, поэтому выходим сразу,
+    оставляя порт 8080 свободным для основного приложения.
+    """
+    if os.environ.get("CLOUD_RUN", "").lower() == "true":
+        logger.info("Cloud Run detected, skipping keep‑alive server")
+        return
+
     # Используем уже импортированный keep_alive модуль
     try:
         import keep_alive
