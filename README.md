@@ -41,6 +41,8 @@ pytest
 - `FATSECRET_KEY` — ключ API FatSecret.
 - `FATSECRET_SECRET` — секрет API FatSecret.
 - `HLITE_DB_PATH` — путь к файлу локальной БД (по умолчанию `db.json`).
+- `DB_USER`, `DB_PASS`, `DB_NAME` — параметры подключения к PostgreSQL.
+- `INSTANCE_UNIX_SOCKET` — путь к Unix‑сокету Cloud SQL инстанса (например `project:region:instance`).
 
 ## Примеры запуска
 
@@ -59,10 +61,12 @@ gcloud run deploy healco-lite \
   --image gcr.io/<PROJECT_ID>/healco-lite \
   --region <REGION> \
   --port 8080 \
-  --set-env-vars PORT=8080,OPENAI_API_KEY=...,TELEGRAM_BOT_TOKEN=...,TELEGRAM_PAYMENT_PROVIDER_TOKEN=... \
+  --set-env-vars PORT=8080,OPENAI_API_KEY=...,TELEGRAM_BOT_TOKEN=...,TELEGRAM_PAYMENT_PROVIDER_TOKEN=...,DB_USER=...,DB_PASS=...,DB_NAME=...,INSTANCE_UNIX_SOCKET=project:region:instance \
   --health-check-http-path /healthz \
   --allow-unauthenticated
 ```
+
+На Cloud Run приложение подключается к базе данных через Unix‑сокет `/cloudsql/${INSTANCE_UNIX_SOCKET}`.
 
 При долгой инициализации можно увеличить таймауты проверок здоровья, например:
 

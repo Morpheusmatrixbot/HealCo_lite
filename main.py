@@ -29,7 +29,7 @@ from openai import OpenAI
 
 from utils.config import get_secret
 from utils.logging import logger
-from utils.db import db_get, db_set, db_keys_prefix
+from utils.postgres import db_get, db_set, db_keys_prefix, init_db
 from utils.cache import _cache_get, _cache_put, CACHE_SCHEMA
 
 OPENFOOD_USER_AGENT = "HealCoLite/1.0 (rafael.sayadi@gmail.com)"
@@ -116,6 +116,9 @@ OPENAI_API_KEY = get_secret("OPENAI_API_KEY", "")
 BOT_TOKEN = get_secret("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_PAYMENT_PROVIDER_TOKEN = get_secret("TELEGRAM_PAYMENT_PROVIDER_TOKEN", "")
 DEVELOPER_USER_ID = int(get_secret("DEVELOPER_USER_ID", "0").split(",")[0]) if get_secret("DEVELOPER_USER_ID", "0").split(",")[0].isdigit() else 0
+
+# Ensure PostgreSQL key/value table exists
+init_db()
 
 # Admin users list - stored in database
 def get_admin_users() -> List[int]:

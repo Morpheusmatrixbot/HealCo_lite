@@ -23,7 +23,6 @@ from utils.consts import (
     SEARCH_CACHE_TTL,
     USER_AGENT,
 )
-from utils.db import DB
 from utils.logging import logger
 from utils.utils import (
     _extract_barcode,

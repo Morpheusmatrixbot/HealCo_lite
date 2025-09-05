@@ -4,7 +4,7 @@ functions for the HealCo Lite project."""
 from .config import get_secret
 from .logging import logger
 from .cache import _cache_get, _cache_put, CACHE_SCHEMA
-from .db import DB, db_get, db_set, db_keys_prefix
+from .postgres import db_get, db_set, db_keys_prefix
 from . import consts
 from .utils import (
     _extract_barcode,
@@ -34,7 +34,6 @@ __all__ = [
     "_cache_get",
     "_cache_put",
     "CACHE_SCHEMA",
-    "DB",
     "db_get",
     "db_set",
     "db_keys_prefix",
